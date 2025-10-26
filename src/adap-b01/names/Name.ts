@@ -18,12 +18,14 @@ export class Name {
   private components: string[] = [];
 
   // ------------------ Helper Methods ------------------
+  // @methodtype helper-method
   private checkIndex(i: number): void {
     if (i < 0 || i >= this.components.length) {
       throw new Error("Index out of range");
     }
   }
 
+  // @methodtype helper-method
   private checkIndexAllowEnd(i: number): void {
     if (i < 0 || i > this.components.length) {
       throw new Error("Index out of range");
@@ -31,6 +33,7 @@ export class Name {
   }
 
   /** Expects that all Name components are properly masked */
+  /** @methodtype initialization-method - mutation */
   constructor(other: string[], delimiter?: string) {
     this.components = other ? other.slice() : [];
 
@@ -44,6 +47,7 @@ export class Name {
    * Control characters are not escaped (creating a human-readable string)
    * Users can vary the delimiter character to be used
    */
+  /** @methodtype conversion-method - query */
   public asString(delimiter: string = this.delimiter): string {
     return this.components.join(delimiter);
   }
@@ -53,37 +57,44 @@ export class Name {
    * Machine-readable means that from a data string, a Name can be parsed back in
    * The control characters in the data string are the default characters
    */
+  /** @methodtype conversion-method - query */
   public asDataString(): string {
     return this.components.join(DEFAULT_DELIMITER);
   }
 
+  /** @methodtype get-method - query */
   public getComponent(i: number): string {
     this.checkIndex(i);
     return this.components[i];
   }
 
   /** Expects that new Name component c is properly masked */
+  /** @methodtype set-method -mutation */
   public setComponent(i: number, c: string): void {
     this.checkIndex(i);
     this.components[i] = c;
   }
 
   /** Returns number of components in Name instance */
+  /** @methodtype get-method - query  */
   public getNoComponents(): number {
     return this.components.length;
   }
 
   /** Expects that new Name component c is properly masked */
+  /** @methodtype command-method - mutation */
   public insert(i: number, c: string): void {
     this.checkIndexAllowEnd(i);
     this.components.splice(i, 0, c);
   }
 
   /** Expects that new Name component c is properly masked */
+  /** @methodtype command-method - mutation */
   public append(c: string): void {
     this.components.push(c);
   }
 
+  /** @methodtype command-method - mutation*/
   public remove(i: number): void {
     this.checkIndex(i);
     this.components.splice(i, 1);
