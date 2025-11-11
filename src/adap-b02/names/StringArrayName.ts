@@ -2,56 +2,57 @@ import { DEFAULT_DELIMITER, ESCAPE_CHARACTER } from "../common/Printable";
 import { Name } from "./Name";
 
 export class StringArrayName implements Name {
+  protected delimiter: string = DEFAULT_DELIMITER;
+  protected components: string[] = [];
 
-    protected delimiter: string = DEFAULT_DELIMITER;
-    protected components: string[] = [];
+  constructor(source: string[], delimiter?: string) {
+    if (delimiter && delimiter.length > 0) this.delimiter = delimiter;
+    this.components = (source ?? []).slice();
+  }
 
-    constructor(source: string[], delimiter?: string) {
-        throw new Error("needs implementation or deletion");
+  public asString(delimiter: string = this.delimiter): string {
+    return this.components.join(delimiter);
+  }
+
+  public asDataString(): string {
+    return this.components.join(this.delimiter);
+  }
+
+  public getDelimiterCharacter(): string {
+    return this.delimiter;
+  }
+
+  public isEmpty(): boolean {
+    return this.components.length === 0;
+  }
+
+  public getNoComponents(): number {
+    return this.components.length;
+  }
+
+  public getComponent(i: number): string {
+    return this.components[i];
+  }
+
+  public setComponent(i: number, c: string): void {
+    this.components[i] = c;
+  }
+
+  public insert(i: number, c: string): void {
+    this.components.splice(i, 0, c);
+  }
+
+  public append(c: string): void {
+    this.components.push(c);
+  }
+
+  public remove(i: number): void {
+    this.components.splice(i, 1);
+  }
+
+  public concat(other: Name): void {
+    for (let i = 0; i < other.getNoComponents(); i++) {
+      this.components.push(other.getComponent(i));
     }
-
-    public asString(delimiter: string = this.delimiter): string {
-        throw new Error("needs implementation or deletion");
-    }
-
-    public asDataString(): string {
-        throw new Error("needs implementation or deletion");
-    }
-
-    public getDelimiterCharacter(): string {
-        throw new Error("needs implementation or deletion");
-    }
-
-    public isEmpty(): boolean {
-        throw new Error("needs implementation or deletion");
-    }
-
-    public getNoComponents(): number {
-        throw new Error("needs implementation or deletion");
-    }
-
-    public getComponent(i: number): string {
-        throw new Error("needs implementation or deletion");
-    }
-
-    public setComponent(i: number, c: string): void {
-        throw new Error("needs implementation or deletion");
-    }
-
-    public insert(i: number, c: string): void {
-        throw new Error("needs implementation or deletion");
-    }
-
-    public append(c: string): void {
-        throw new Error("needs implementation or deletion");
-    }
-
-    public remove(i: number): void {
-        throw new Error("needs implementation or deletion");
-    }
-
-    public concat(other: Name): void {
-        throw new Error("needs implementation or deletion");
-    }
-
+  }
 }

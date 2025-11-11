@@ -2,57 +2,105 @@ import { DEFAULT_DELIMITER, ESCAPE_CHARACTER } from "../common/Printable";
 import { Name } from "./Name";
 
 export class StringName implements Name {
+  protected delimiter: string = DEFAULT_DELIMITER;
+  protected name: string = "";
+  protected noComponents: number = 0;
 
-    protected delimiter: string = DEFAULT_DELIMITER;
-    protected name: string = "";
-    protected noComponents: number = 0;
-
-    constructor(source: string, delimiter?: string) {
-        throw new Error("needs implementation or deletion");
+  constructor(source: string, delimiter?: string) {
+    if (delimiter && delimiter.length > 0) {
+      this.delimiter = delimiter;
     }
 
-    public asString(delimiter: string = this.delimiter): string {
-        throw new Error("needs implementation or deletion");
-    }
+    this.name = source ?? "";
 
-    public asDataString(): string {
-        throw new Error("needs implementation or deletion");
-    }
+    this.noComponents =
+      this.name.length === 0 ? 0 : this.split(this.name, this.delimiter).length;
+  }
 
-    public getDelimiterCharacter(): string {
-        throw new Error("needs implementation or deletion");
-    }
+  private toArray(): string[] {
+    if (this.name.length === 0) return [];
+    return this.name.split(this.delimiter);
+  }
 
-    public isEmpty(): boolean {
-        throw new Error("needs implementation or deletion");
-    }
+  private fromArray(a: string[]): void {
+    this.name = a.join(this.delimiter);
+    this.noComponents = a.length;
+  }
 
-    public getNoComponents(): number {
-        throw new Error("needs implementation or deletion");
-    }
+  public asString(delimiter: string = this.delimiter): string {
+    if (!this.name) return "";
+    if (delimiter === this.delimiter) return this.name;
+    const parts = this.split(this.name, this.delimiter);
+    return parts.join(delimiter);
+  }
 
-    public getComponent(x: number): string {
-        throw new Error("needs implementation or deletion");
-    }
+  public asDataString(): string {
+    return this.asString(DEFAULT_DELIMITER);
+  }
 
-    public setComponent(n: number, c: string): void {
-        throw new Error("needs implementation or deletion");
-    }
+  public getDelimiterCharacter(): string {
+    return this.delimiter;
+  }
 
-    public insert(n: number, c: string): void {
-        throw new Error("needs implementation or deletion");
-    }
+  public isEmpty(): boolean {
+    return this.noComponents === 0;
+  }
 
-    public append(c: string): void {
-        throw new Error("needs implementation or deletion");
-    }
+  public getNoComponents(): number {
+    return this.noComponents;
+  }
 
-    public remove(n: number): void {
-        throw new Error("needs implementation or deletion");
-    }
+  public getComponent(x: number): string {
+    const parts = this.parts();
+    return parts[x];
+  }
 
-    public concat(other: Name): void {
-        throw new Error("needs implementation or deletion");
-    }
+  public setComponent(n: number, c: string): void {
+    const parts = this.parts();
+    parts[n] = c;
+    this.rebuildFrom(parts);
+  }
 
+  public insert(n: number, c: string): void {
+    const parts = this.parts();
+    parts.splice(n, 0, c);
+    this.rebuildFrom(parts);
+  }
+
+  public append(c: string): void {
+    const parts = this.parts();
+    parts.push(c);
+    this.rebuildFrom(parts);
+  }
+
+  public remove(n: number): void {
+    const parts = this.parts();
+    parts.splice(n, 1);
+    this.rebuildFrom(parts);
+  }
+
+  public concat(other: Name): void {
+    const lhs = this.parts();
+    const rhsStr = other.asString(this.delimiter);
+    if (rhsStr.length === 0) return;
+    const rhs = this.split(rhsStr, this.delimiter);
+    this.rebuildFrom(lhs.concat(rhs));
+  }
+
+  // --- helpers ---
+
+  protected parts(): string[] {
+    if (!this.name) return [];
+    return this.split(this.name, this.delimiter);
+  }
+
+  protected rebuildFrom(parts: string[]): void {
+    this.name = parts.join(this.delimiter);
+    this.noComponents = parts.length;
+  }
+
+  protected split(s: string, delim: string): string[] {
+    // keep empty components (e.g., "///" -> ["", "", "", ""])
+    return s === "" ? [] : s.split(delim);
+  }
 }
