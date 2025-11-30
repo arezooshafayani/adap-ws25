@@ -116,7 +116,6 @@ describe("StringArrayName – contract tests", () => {
 
     expect(clone.isEqual(original)).toBe(true);
 
-    // تغییر در clone نباید original را عوض کند
     clone.setComponent(1, "x");
     expect(original.getComponent(1)).toBe("b");
     expect(clone.getComponent(1)).toBe("x");
