@@ -1,11 +1,10 @@
 import { IllegalArgumentException } from "../common/IllegalArgumentException";
 import { InvalidStateException } from "../common/InvalidStateException";
-
-import { Name } from "../names/Name";
-import { Directory } from "./Directory";
-
 import { ServiceFailureException } from "../common/ServiceFailureException";
 import { Exception } from "../common/Exception";
+
+import { Name } from "../names/Name";
+import type { Directory } from "./Directory";
 
 export class Node {
   protected baseName: string = "";
@@ -13,7 +12,7 @@ export class Node {
 
   constructor(bn: string, pn: Directory) {
     this.doSetBaseName(bn);
-    this.parentNode = pn; // why oh why do I have to set this
+    this.parentNode = pn;
     this.initialize(pn);
   }
 
@@ -59,20 +58,52 @@ export class Node {
    * @param bn basename of node being searched for
    */
   public findNodes(bn: string): Set<Node> {
+    IllegalArgumentException.assert(
+      bn !== null && bn !== undefined,
+      "Name to search cannot be null"
+    );
+
+    const result: Set<Node> = new Set();
+
     try {
-      if (this.getBaseName() === "") {
-        throw new InvalidStateException("Invalid base name");
-      }
-
-      const result = new Set<Node>();
-
       if (this.getBaseName() === bn) {
         result.add(this);
       }
 
+      // Detect Directory without importing Directory class
+      if ((this as any).childNodes instanceof Set) {
+        const children: Set<Node> = (this as any).childNodes;
+        for (const child of children) {
+          const childResults = child.findNodes(bn);
+          childResults.forEach((n) => result.add(n));
+        }
+      }
+
       return result;
-    } catch (err) {
-      throw new ServiceFailureException("findNodes failed", err as Exception);
+    } catch (inner) {
+      if (inner instanceof ServiceFailureException) {
+        throw inner;
+      }
+
+      if (inner instanceof InvalidStateException) {
+        throw new ServiceFailureException(
+          "Service failure during findNodes",
+          inner
+        );
+      }
+
+      throw new ServiceFailureException("Service failure during findNodes");
     }
+  }
+
+  /**
+   * Helper to escalate a failure at the service boundary.
+   */
+  private raiseServiceFailure(inner: Exception): never {
+    const sfe = new ServiceFailureException(
+      "Service failure during findNodes",
+      inner
+    );
+    throw sfe;
   }
 }

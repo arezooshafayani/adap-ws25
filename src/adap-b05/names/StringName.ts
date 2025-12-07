@@ -1,31 +1,59 @@
 import { DEFAULT_DELIMITER, ESCAPE_CHARACTER } from "../common/Printable";
 import { Name } from "./Name";
 import { AbstractName } from "./AbstractName";
+import { IllegalArgumentException } from "../common/IllegalArgumentException";
+import { InvalidStateException } from "../common/InvalidStateException";
 
 export class StringName extends AbstractName {
+  protected components: string[] = [];
   protected name: string = "";
   protected noComponents: number = 0;
 
   constructor(source: string, delimiter?: string) {
-    super(delimiter ?? DEFAULT_DELIMITER);
-
-    this.delimiter = delimiter ?? DEFAULT_DELIMITER;
+    super(delimiter);
+    IllegalArgumentException.assert(
+      source !== null && source !== undefined,
+      "Source must not be null"
+    );
     this.name = source;
+    this.components = this.parseComponents(source);
+    this.noComponents = this.components.length;
+  }
 
-    if (source.length === 0) {
-      this.noComponents = 0;
-      return;
+  // Helper Function
+  protected parseComponents(source: string): string[] {
+    const result: string[] = [];
+    let current = "";
+    let escaped = false;
+
+    for (let i = 0; i < source.length; i++) {
+      const ch = source[i];
+
+      if (escaped) {
+        current += ch;
+        escaped = false;
+      } else if (ch === ESCAPE_CHARACTER) {
+        escaped = true;
+      } else if (ch === this.delimiter) {
+        result.push(current);
+        current = "";
+      } else {
+        current += ch;
+      }
     }
-
-    this.noComponents = source.split(this.delimiter).length;
+    result.push(current);
+    return result;
   }
 
   public clone(): Name {
-    return new StringName(this.name, this.delimiter);
+    const copy = new StringName("", this.delimiter);
+    copy.components = [...this.components];
+    copy.noComponents = this.noComponents;
+    return copy;
   }
 
   public asString(delimiter: string = this.delimiter): string {
-    return this.name;
+    return this.components.join(delimiter);
   }
 
   public asDataString(): string {
@@ -33,20 +61,22 @@ export class StringName extends AbstractName {
   }
 
   public isEqual(other: Name): boolean {
+    if (other === this) return true;
+    if (other == null) return false;
     if (this.getNoComponents() !== other.getNoComponents()) return false;
-
     for (let i = 0; i < this.noComponents; i++) {
-      if (this.getComponent(i) !== other.getComponent(i)) return false;
+      if (this.components[i] !== other.getComponent(i)) return false;
     }
     return true;
   }
 
   public getHashCode(): number {
-    let hash = 0;
-    for (let i = 0; i < this.name.length; i++) {
-      hash = (hash * 31 + this.name.charCodeAt(i)) | 0;
+    const s = this.asDataString();
+    let hash = 5381;
+    for (let i = 0; i < s.length; i++) {
+      hash = ((hash << 5) + hash) ^ s.charCodeAt(i);
     }
-    return hash;
+    return hash >>> 0;
   }
 
   public isEmpty(): boolean {
@@ -62,48 +92,52 @@ export class StringName extends AbstractName {
   }
 
   public getComponent(i: number): string {
-    if (i < 0 || i >= this.noComponents) {
-      throw new RangeError("index out of bounds");
-    }
-    return this.name.split(this.delimiter)[i];
+    IllegalArgumentException.assert(
+      i >= 0 && i < this.noComponents,
+      "Index out of bounds"
+    );
+    return this.components[i];
   }
 
   public setComponent(i: number, c: string) {
-    const comps = this.name.split(this.delimiter);
-    if (i < 0 || i >= comps.length) {
-      throw new RangeError("index out of bounds");
-    }
-    comps[i] = c;
-    this.name = comps.join(this.delimiter);
+    IllegalArgumentException.assert(
+      i >= 0 && i < this.noComponents,
+      "Index out of bounds"
+    );
+    InvalidStateException.assert(
+      c !== null && c !== undefined,
+      "Component cannot be null"
+    );
+    this.components[i] = c;
   }
 
   public insert(i: number, c: string) {
-    const comps = this.name.length > 0 ? this.name.split(this.delimiter) : [];
-    if (i < 0 || i > comps.length) {
-      throw new RangeError("index out of bounds");
-    }
-    comps.splice(i, 0, c);
-    this.name = comps.join(this.delimiter);
-    this.noComponents = comps.length;
+    IllegalArgumentException.assert(
+      i >= 0 && i <= this.noComponents,
+      "Index out of bounds"
+    );
+    this.components.splice(i, 0, c);
+    this.noComponents++;
   }
 
   public append(c: string) {
-    this.insert(this.noComponents, c);
+    this.components.push(c);
+    this.noComponents++;
   }
 
   public remove(i: number) {
-    const comps = this.name.split(this.delimiter);
-    if (i < 0 || i >= comps.length) {
-      throw new RangeError("index out of bounds");
-    }
-    comps.splice(i, 1);
-    this.name = comps.join(this.delimiter);
-    this.noComponents = comps.length;
+    IllegalArgumentException.assert(
+      i >= 0 && i < this.noComponents,
+      "Index out of bounds"
+    );
+    this.components.splice(i, 1);
+    this.noComponents--;
   }
 
   public concat(other: Name): void {
     for (let i = 0; i < other.getNoComponents(); i++) {
-      this.append(other.getComponent(i));
+      this.components.push(other.getComponent(i));
     }
+    this.noComponents = this.components.length;
   }
 }
